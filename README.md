@@ -1,1 +1,1 @@
-# Phishing-Link-Detector
+# PHISHING-LINK-DETECTOR

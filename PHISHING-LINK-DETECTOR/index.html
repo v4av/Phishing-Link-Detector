@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PHISING LINK DETECTOR — CyberShield</title>
+  <meta name="description"
+    content="Instantly scan any URL for phishing, malware, and cyber threats with CyberShield's AI-powered URL Threat Scanner." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    /* ── TOKENS ───────────────────────────────────── */
+    :root {
+      --bg: #080d18;
+      --bg2: #0d1526;
+      --glass: rgba(13, 21, 38, 0.65);
+      --glass-b: rgba(255, 255, 255, 0.06);
+      --cyan: #00f0ff;
+      --cyan-dim: rgba(0, 240, 255, 0.18);
+      --yellow: #ffe135;
+      --yellow-dim: rgba(255, 225, 53, 0.18);
+      --crimson: #ff2d55;
+      --crimson-dim: rgba(255, 45, 85, 0.18);
+      --text: #cdd9f0;
+      --text-muted: #5a6d8a;
+      --radius: 16px;
+      --radius-xl: 24px;
+      --glow-cyan: 0 0 24px rgba(0, 240, 255, 0.45), 0 0 60px rgba(0, 240, 255, 0.15);
+      --glow-yellow: 0 0 24px rgba(255, 225, 53, 0.45), 0 0 60px rgba(255, 225, 53, 0.15);
+      --glow-red: 0 0 24px rgba(255, 45, 85, 0.55), 0 0 60px rgba(255, 45, 85, 0.20);
+    }
+
+    /* ── RESET ────────────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── AMBIENT BACKGROUND ───────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0, 240, 255, 0.09) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 50% at 80% 100%, rgba(255, 45, 85, 0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 10% 80%, rgba(0, 80, 200, 0.06) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── GRID OVERLAY ─────────────────────────────── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 240, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── LAYOUT ───────────────────────────────────── */
+    .page {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 780px;
+      padding: 60px 24px 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+    }
+
+    /* ── HEADER ───────────────────────────────────── */
+    header {
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      border-radius: 99px;
+      padding: 6px 16px;
+      margin-bottom: 24px;
+      background: rgba(0, 240, 255, 0.06);
+    }
+
+    .badge::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+      animation: pulse-dot 2s ease infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(0.8);
+      }
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 3.6rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #fff 30%, var(--cyan) 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+
+    .subtitle {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── SCANNER CARD ─────────────────────────────── */
+    .scanner-card {
+      width: 100%;
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      border-radius: var(--radius-xl);
+      padding: 36px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 8px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .input-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    .input-wrap svg.icon-link {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      color: var(--text-muted);
+      pointer-events: none;
+      transition: color 0.3s;
+    }
+
+    #url-input {
+      width: 100%;
+      height: 56px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 0 18px 0 48px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      color: #e8f0ff;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    #url-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    #url-input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.12), var(--glow-cyan);
+    }
+
+    #url-input:focus+.input-wrap svg.icon-link,
+    .input-wrap:focus-within svg.icon-link {
+      color: var(--cyan);
+    }
+
+    #scan-btn {
+      height: 56px;
+      padding: 0 28px;
+      background: linear-gradient(135deg, #00c8d8, #0088ff);
+      border: none;
+      border-radius: 12px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #000;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: transform 0.2s, box-shadow 0.3s, filter 0.2s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0, 200, 255, 0.3);
+    }
+
+    #scan-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 200, 255, 0.55);
+      filter: brightness(1.1);
+    }
+
+    #scan-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    #scan-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #scan-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* ── LOADING STATE ────────────────────────────── */
+    #loading-section {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      padding: 40px 0;
+    }
+
+    #loading-section.visible {
+      display: flex;
+    }
+
+    .radar-container {
+      position: relative;
+      width: 120px;
+      height: 120px;
+    }
+
+    .radar-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1.5px solid rgba(0, 240, 255, 0.3);
+      inset: 0;
+      animation: ring-expand 2.4s ease-out infinite;
+    }
+
+    .radar-ring:nth-child(2) {
+      animation-delay: 0.8s;
+    }
+
+    .radar-ring:nth-child(3) {
+      animation-delay: 1.6s;
+    }
+
+    @keyframes ring-expand {
+      0% {
+        transform: scale(0);
+        opacity: 0.9;
+      }
+
+      100% {
+        transform: scale(1.8);
+        opacity: 0;
+      }
+    }
+
+    .radar-core {
+      position: absolute;
+      inset: 30px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--cyan) 0%, rgba(0, 240, 255, 0.1) 70%);
+      box-shadow: var(--glow-cyan);
+      animation: core-pulse 1.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes core-pulse {
+      from {
+        transform: scale(0.8);
+        opacity: 0.6;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* Sweep line */
+    .radar-sweep {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+
+    .radar-sweep::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 50%;
+      height: 2px;
+      transform-origin: left center;
+      background: linear-gradient(90deg, var(--cyan), transparent);
+      animation: sweep 1.8s linear infinite;
+    }
+
+    @keyframes sweep {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-text {
+      font-size: 0.9rem;
+      color: var(--cyan);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: blink 1.4s ease infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    /* ── RESULT CARD ──────────────────────────────── */
+    #result-section {
+      display: none;
+      width: 100%;
+    }
+
+    #result-section.visible {
+      display: block;
+    }
+
+    .result-card {
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      animation: slide-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+      border: 1.5px solid;
+    }
+
+    @keyframes slide-in {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .result-card.safe {
+      background: linear-gradient(145deg, rgba(0, 240, 255, 0.07), rgba(0, 240, 255, 0.03));
+      border-color: rgba(0, 240, 255, 0.35);
+      box-shadow: var(--glow-cyan), inset 0 1px 0 rgba(0, 240, 255, 0.1);
+    }
+
+    .result-card.suspicious {
+      background: linear-gradient(145deg, rgba(255, 225, 53, 0.08), rgba(255, 225, 53, 0.03));
+      border-color: rgba(255, 225, 53, 0.45);
+      box-shadow: var(--glow-yellow), inset 0 1px 0 rgba(255, 225, 53, 0.1);
+    }
+
+    .result-card.malicious {
+      background: linear-gradient(145deg, rgba(255, 45, 85, 0.1), rgba(255, 45, 85, 0.04));
+      border-color: rgba(255, 45, 85, 0.45);
+      box-shadow: var(--glow-red), inset 0 1px 0 rgba(255, 45, 85, 0.1);
+    }
+
+    /* ── STATUS HEADER ────────────────────────────── */
+    .status-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+
+    .safe .status-icon {
+      background: var(--cyan-dim);
+      box-shadow: var(--glow-cyan);
+    }
+
+    .suspicious .status-icon {
+      background: var(--yellow-dim);
+      box-shadow: var(--glow-yellow);
+    }
+
+    .malicious .status-icon {
+      background: var(--crimson-dim);
+      box-shadow: var(--glow-red);
+    }
+
+    .status-label {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .safe .status-label {
+      color: var(--cyan);
+    }
+
+    .suspicious .status-label {
+      color: var(--yellow);
+    }
+
+    .malicious .status-label {
+      color: var(--crimson);
+    }
+
+    .status-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+      font-family: 'JetBrains Mono', monospace;
+      word-break: break-all;
+    }
+
+    /* ── RISK GAUGE ───────────────────────────────── */
+    .gauge-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .gauge-label {
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .gauge-ring {
+      position: relative;
+      width: 84px;
+      height: 84px;
+    }
+
+    .gauge-ring svg {
+      width: 84px;
+      height: 84px;
+      transform: rotate(-90deg);
+    }
+
+    .gauge-ring circle.track {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.07);
+      stroke-width: 6;
+    }
+
+    .gauge-ring circle.fill {
+      fill: none;
+      stroke-width: 6;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.5s;
+      stroke-dasharray: 226;
+      stroke-dashoffset: 226;
+    }
+
+    .gauge-number {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    /* ── DIVIDER ──────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin: 0 0 24px;
+    }
+
+    /* ── FINDINGS LIST ────────────────────────────── */
+    .findings-title {
+      font-size: 0.72rem;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .findings-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .finding-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      font-size: 0.88rem;
+      animation: fade-up 0.4s ease both;
+    }
+
+    @keyframes fade-up {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .finding-item.safe {
+      background: rgba(0, 240, 255, 0.05);
+      border-color: rgba(0, 240, 255, 0.15);
+    }
+
+    .finding-item.low {
+      background: rgba(80, 200, 255, 0.05);
+      border-color: rgba(80, 200, 255, 0.15);
+    }
+
+    .finding-item.medium {
+      background: rgba(255, 225, 53, 0.06);
+      border-color: rgba(255, 225, 53, 0.2);
+    }
+
+    .finding-item.high {
+      background: rgba(255, 45, 85, 0.07);
+      border-color: rgba(255, 45, 85, 0.22);
+    }
+
+    .finding-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .finding-item.safe .finding-icon {
+      background: var(--cyan-dim);
+    }
+
+    .finding-item.low .finding-icon {
+      background: rgba(100, 200, 255, 0.12);
+    }
+
+    .finding-item.medium .finding-icon {
+      background: var(--yellow-dim);
+    }
+
+    .finding-item.high .finding-icon {
+      background: var(--crimson-dim);
+    }
+
+    .finding-body {
+      flex: 1;
+    }
+
+    .finding-label {
+      font-weight: 600;
+      margin-bottom: 3px;
+      font-size: 0.9rem;
+    }
+
+    .finding-item.safe .finding-label {
+      color: var(--cyan);
+    }
+
+    .finding-item.low .finding-label {
+      color: #60c8ff;
+    }
+
+    .finding-item.medium .finding-label {
+      color: var(--yellow);
+    }
+
+    .finding-item.high .finding-label {
+      color: var(--crimson);
+    }
+
+    .finding-detail {
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* ── SCAN AGAIN BUTTON ────────────────────────── */
+    .scan-again-btn {
+      margin-top: 24px;
+      width: 100%;
+      height: 46px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: all 0.25s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .scan-again-btn:hover {
+      border-color: rgba(0, 240, 255, 0.35);
+      color: var(--cyan);
+      background: rgba(0, 240, 255, 0.04);
+    }
+
+    /* ── ERROR BANNER ─────────────────────────────── */
+    #error-banner {
+      display: none;
+      background: rgba(255, 45, 85, 0.08);
+      border: 1px solid rgba(255, 45, 85, 0.3);
+      border-radius: 12px;
+      padding: 14px 18px;
+      color: var(--crimson);
+      font-size: 0.88rem;
+      width: 100%;
+      text-align: center;
+    }
+
+    #error-banner.visible {
+      display: block;
+    }
+
+    /* ── FOOTER ───────────────────────────────────── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      padding-bottom: 40px;
+    }
+
+    footer span {
+      color: var(--cyan);
+    }
+
+    /* ── RESPONSIVE ───────────────────────────────── */
+    @media (max-width: 560px) {
+      .input-row {
+        flex-direction: column;
+      }
+
+      #scan-btn {
+        height: 50px;
+      }
+
+      .status-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .scanner-card {
+        padding: 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="page">
+
+    <!-- HEADER ──────────────────────────────── -->
+    <header>
+      <div class="badge">PHISING LINK DETECTOR</div>
+      <h1>PHISHING LINK DETECTOR</h1>
+      <p class="subtitle">Paste any link below. Our engine will analyse its structure, heuristics, and security posture
+        to determine if it's safe.</p>
+    </header>
+
+    <!-- SCANNER CARD ────────────────────────── -->
+    <section class="scanner-card" aria-label="URL Scanner">
+
+      <div class="input-row">
+        <div class="input-wrap" style="position:relative;">
+          <!-- Link icon -->
+          <svg class="icon-link" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2"
+            style="position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5" />
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5" />
+          </svg>
+          <input id="url-input" type="url" placeholder="https://example.com/path?query=value" autocomplete="off"
+            spellcheck="false" aria-label="URL to scan" />
+        </div>
+        <button id="scan-btn" onclick="runScan()" aria-label="Scan URL">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Scan
+        </button>
+      </div>
+
+      <!-- LOADING ───────────────────────────── -->
+      <div id="loading-section">
+        <div class="radar-container">
+          <div class="radar-ring"></div>
+          <div class="radar-ring"></div>
+          <div class="radar-ring"></div>
+          <div class="radar-sweep"></div>
+          <div class="radar-core"></div>
+        </div>
+        <div class="loading-text">Scanning threat vectors…</div>
+      </div>
+
+      <!-- ERROR ─────────────────────────────── -->
+      <div id="error-banner" role="alert"></div>
+
+    </section>
+
+    <!-- RESULT SECTION ──────────────────────── -->
+    <section id="result-section" aria-live="polite"></section>
+
+  </div>
+
+  <!-- FOOTER ────────────────────────────────── -->
+  <footer>
+    Powered by <span>CyberShield</span> · Heuristic analysis engine &amp; optional live threat intelligence
+  </footer>
+
+  <!-- ──────────────────────────────────────────
+     JAVASCRIPT
+─────────────────────────────────────────── -->
+  <script>
+    const input = document.getElementById('url-input');
+    const scanBtn = document.getElementById('scan-btn');
+    const loadingEl = document.getElementById('loading-section');
+    const resultEl = document.getElementById('result-section');
+    const errorBanner = document.getElementById('error-banner');
+
+    /* Allow Enter key to trigger scan */
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') runScan(); });
+
+    /* ── ICONS per severity ───────────────────────────── */
+    const ICONS = {
+      safe: '✅',
+      low: '🔵',
+      medium: '⚠️',
+      high: '🚨'
+    };
+
+    const STATUS_ICONS = {
+      Safe: '🛡️',
+      Suspicious: '⚠️',
+      Malicious: '☠️'
+    };
+
+    /* ── GAUGE COLOUR per score ───────────────────────── */
+    function gaugeColor(score) {
+      if (score <= 25) return '#00f0ff';
+      if (score <= 60) return '#ffe135';
+      return '#ff2d55';
+    }
+
+    /* ── MAIN SCAN FUNCTION ───────────────────────────── */
+    async function runScan() {
+      const url = input.value.trim();
+
+      if (!url) {
+        showError('Please enter a URL to scan.');
+        return;
+      }
+
+      // Reset UI
+      hideError();
+      showLoading(true);
+      resultEl.classList.remove('visible');
+      resultEl.innerHTML = '';
+      scanBtn.disabled = true;
+
+      try {
+        const resp = await fetch('/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.error || `Server error: ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        renderResult(data, url);
+
+      } catch (err) {
+        showError(err.message || 'Connection failed. Is the Flask server running?');
+      } finally {
+        showLoading(false);
+        scanBtn.disabled = false;
+      }
+    }
+
+    /* ── RENDER RESULT ────────────────────────────────── */
+    function renderResult(data, url) {
+      const { score, status, findings } = data;
+      const cls = status.toLowerCase();
+      const circ = 226; // 2 * π * 36
+      const fill = circ - (score / 100) * circ;
+      const color = gaugeColor(score);
+
+      // Stagger animation delays
+      const findingItems = findings.map((f, i) => `
+      <li class="finding-item ${f.severity}" style="animation-delay:${i * 60}ms">
+        <div class="finding-icon">${ICONS[f.severity] || '🔍'}</div>
+        <div class="finding-body">
+          <div class="finding-label">${escHtml(f.label)}</div>
+          <div class="finding-detail">${escHtml(f.detail)}</div>
+        </div>
+      </li>
+    `).join('');
+
+      resultEl.innerHTML = `
+      <div class="result-card ${cls}">
+
+        <div class="status-header">
+          <div class="status-left">
+            <div class="status-icon">${STATUS_ICONS[status] || '🔍'}</div>
+            <div>
+              <div class="status-label">${escHtml(status)}</div>
+              <div class="status-sub">${escHtml(url.length > 60 ? url.slice(0, 57) + '…' : url)}</div>
+            </div>
+          </div>
+
+          <!-- RISK GAUGE -->
+          <div class="gauge-wrap">
+            <div class="gauge-label">Risk Score</div>
+            <div class="gauge-ring" id="gauge-ring">
+              <svg viewBox="0 0 84 84">
+                <circle class="track" cx="42" cy="42" r="36"/>
+                <circle class="fill" id="gauge-fill" cx="42" cy="42" r="36"
+                  stroke="${color}"
+                  stroke-dasharray="${circ}"
+                  stroke-dashoffset="${circ}"/>
+              </svg>
+              <div class="gauge-number" id="gauge-num" style="color:${color}">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="findings-title">Scan Findings</div>
+        <ul class="findings-list">${findingItems}</ul>
+
+        <button class="scan-again-btn" onclick="clearResult()">
+          ↩ Scan Another URL
+        </button>
+      </div>
+    `;
+
+      resultEl.classList.add('visible');
+
+      /* Animate gauge after DOM paint */
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const fillEl = document.getElementById('gauge-fill');
+          const numEl = document.getElementById('gauge-num');
+          if (fillEl) fillEl.style.strokeDashoffset = fill;
+
+          // Count-up animation
+          let current = 0;
+          const step = score / 50;
+          const timer = setInterval(() => {
+            current = Math.min(current + step, score);
+            if (numEl) numEl.textContent = Math.round(current);
+            if (current >= score) clearInterval(timer);
+          }, 20);
+        });
+      });
+    }
+
+    /* ── HELPERS ──────────────────────────────────────── */
+    function showLoading(visible) {
+      loadingEl.classList.toggle('visible', visible);
+    }
+
+    function showError(msg) {
+      errorBanner.textContent = '⚠ ' + msg;
+      errorBanner.classList.add('visible');
+    }
+
+    function hideError() {
+      errorBanner.classList.remove('visible');
+    }
+
+    function clearResult() {
+      resultEl.classList.remove('visible');
+      resultEl.innerHTML = '';
+      input.value = '';
+      input.focus();
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+
+</html>

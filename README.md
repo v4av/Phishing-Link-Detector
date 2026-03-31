@@ -16,7 +16,7 @@ Data	OpenPhish / PhishTank Datasets
 
 Installation
 1. Clone the repository :
-git clone https://github.com/yourusername/phishing-link-detector.git
+git clone https://github.com/v4av/phishing-link-detector.git
 cd phishing-link-detector
 2. Set up virtual environment :
 python -m venv venv
